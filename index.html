@@ -55,7 +55,7 @@
       stroke: #00b4d8;
       stroke-dasharray: 628; /* 2 * PI * 100 */
       stroke-dashoffset: 628;
-      transition: stroke-dashoffset 1s linear;
+      transition: stroke-dashoffset 0.1s linear;
     }
     .circle .countdown {
       position: absolute;
@@ -92,12 +92,14 @@
       margin-bottom: 20px;
     }
     .duration-inputs label {
-      margin: 0 10px;
-      font-size: 1rem;
+      display: block;
+      margin: 10px 0;
+      font-size: 1.5rem; /* Increased font size by 50% */
     }
     .duration-inputs input {
-      width: 50px;
+      width: 80px;
       text-align: center;
+      font-size: 1.5rem; /* Increased font size by 50% */
     }
   </style>
 </head>
@@ -111,15 +113,15 @@
       </svg>
       <div class="countdown" id="countdown-display"></div>
     </div>
-    <div class="session-timer" id="session-timer-display">Session Time: 5:00</div>
+    <div class="session-timer" id="session-timer-display">Session Time: 5:00.0</div>
     <div class="duration-inputs">
       <label>
-        Inhale Duration (3-5 sec):
-        <input type="number" id="inhale-duration" value="4" min="3" max="5">
+        Inhale Duration (3.0-5.0 sec):
+        <input type="number" id="inhale-duration" value="4.0" min="3.0" max="5.0" step="0.1">
       </label>
       <label>
-        Exhale Duration (5-7 sec):
-        <input type="number" id="exhale-duration" value="6" min="5" max="7">
+        Exhale Duration (5.0-7.0 sec):
+        <input type="number" id="exhale-duration" value="6.0" min="5.0" max="7.0" step="0.1">
       </label>
     </div>
     <div class="controls">
@@ -133,8 +135,8 @@
   <!-- JavaScript Code -->
   <script>
     // Variables for durations
-    let inhaleDuration = 4; // default value
-    let exhaleDuration = 6; // default value
+    let inhaleDuration = 4.0; // default value in seconds
+    let exhaleDuration = 6.0; // default value in seconds
 
     // Phases of the breathing cycle
     let phases = [
@@ -153,8 +155,8 @@
     let timeLeft = 0; // No time left before starting
     let timerInterval;
     let isRunning = false;
-    let sessionTimeLeft = 300; // 5 minutes in seconds
-    let cycleTimeElapsed = 0; // Time elapsed within the current cycle
+    let sessionTimeLeft = 300.0; // 5 minutes in seconds
+    let cycleTimeElapsed = 0.0; // Time elapsed within the current cycle
 
     const phaseDisplay = document.getElementById('phase-display');
     const countdownDisplay = document.getElementById('countdown-display');
@@ -169,8 +171,9 @@
 
     function formatTime(seconds) {
       const mins = Math.floor(seconds / 60);
-      const secs = seconds % 60;
-      return `${mins}:${String(secs).padStart(2, '0')}`;
+      const secs = Math.floor(seconds % 60);
+      const tenths = Math.floor((seconds % 1) * 10);
+      return `${mins}:${String(secs).padStart(2, '0')}.${tenths}`;
     }
 
     function updateDisplay() {
@@ -183,7 +186,7 @@
         progressCircle.style.stroke = '#00b4d8'; // Default color
       } else {
         phaseDisplay.textContent = phases[phaseIndex].name;
-        countdownDisplay.textContent = timeLeft;
+        countdownDisplay.textContent = timeLeft.toFixed(1);
         sessionTimerDisplay.textContent = 'Session Time: ' + formatTime(sessionTimeLeft);
         progressCircle.style.stroke = phases[phaseIndex].color;
 
@@ -197,7 +200,7 @@
       phaseIndex++;
       if (phaseIndex >= phases.length) {
         phaseIndex = 0;
-        cycleTimeElapsed = 0; // Reset cycle time when starting a new cycle
+        cycleTimeElapsed = 0.0; // Reset cycle time when starting a new cycle
       }
       timeLeft = phases[phaseIndex].duration;
       updateDisplay();
@@ -206,16 +209,16 @@
     function startTimer() {
       if (isRunning) return;
       // Read inhale and exhale durations from inputs
-      inhaleDuration = parseInt(inhaleInput.value);
-      exhaleDuration = parseInt(exhaleInput.value);
+      inhaleDuration = parseFloat(inhaleInput.value);
+      exhaleDuration = parseFloat(exhaleInput.value);
 
       // Validate input ranges
-      if (inhaleDuration < 3 || inhaleDuration > 5) {
-        alert('Inhale duration must be between 3 and 5 seconds.');
+      if (inhaleDuration < 3.0 || inhaleDuration > 5.0) {
+        alert('Inhale duration must be between 3.0 and 5.0 seconds.');
         return;
       }
-      if (exhaleDuration < 5 || exhaleDuration > 7) {
-        alert('Exhale duration must be between 5 and 7 seconds.');
+      if (exhaleDuration < 5.0 || exhaleDuration > 7.0) {
+        alert('Exhale duration must be between 5.0 and 7.0 seconds.');
         return;
       }
 
@@ -239,9 +242,9 @@
       resetButton.style.display = 'inline-block';
 
       timerInterval = setInterval(() => {
-        timeLeft--;
-        cycleTimeElapsed++;
-        sessionTimeLeft--;
+        timeLeft -= 0.1;
+        cycleTimeElapsed += 0.1;
+        sessionTimeLeft -= 0.1;
         if (sessionTimeLeft <= 0) {
           // Session time is over
           clearInterval(timerInterval);
@@ -252,11 +255,11 @@
           resetButton.style.display = 'inline-block';
           return;
         }
-        updateDisplay();
         if (timeLeft <= 0) {
           nextPhase();
         }
-      }, 1000);
+        updateDisplay();
+      }, 100);
     }
 
     function pauseTimer() {
@@ -273,9 +276,9 @@
       pauseButton.style.display = 'inline-block';
       resumeButton.style.display = 'none';
       timerInterval = setInterval(() => {
-        timeLeft--;
-        cycleTimeElapsed++;
-        sessionTimeLeft--;
+        timeLeft -= 0.1;
+        cycleTimeElapsed += 0.1;
+        sessionTimeLeft -= 0.1;
         if (sessionTimeLeft <= 0) {
           // Session time is over
           clearInterval(timerInterval);
@@ -286,20 +289,20 @@
           resetButton.style.display = 'inline-block';
           return;
         }
-        updateDisplay();
         if (timeLeft <= 0) {
           nextPhase();
         }
-      }, 1000);
+        updateDisplay();
+      }, 100);
     }
 
     function resetTimer() {
       clearInterval(timerInterval);
       isRunning = false;
       phaseIndex = -1;
-      timeLeft = 0;
-      sessionTimeLeft = 300; // Reset to 5 minutes
-      cycleTimeElapsed = 0;
+      timeLeft = 0.0;
+      sessionTimeLeft = 300.0; // Reset to 5 minutes
+      cycleTimeElapsed = 0.0;
       updateDisplay();
       startButton.style.display = 'inline-block';
       pauseButton.style.display = 'none';
